@@ -8,53 +8,107 @@
 <style>
 body {
   margin: 0;
-  font-family: Arial;
-  background: #0f172a;
+  font-family: 'Segoe UI', sans-serif;
+  background: radial-gradient(circle at top, #0f172a, #020617);
   color: white;
+  overflow: hidden;
+}
+
+/* 18+ Overlay */
+#overlay {
+  position: fixed;
+  width: 100%;
+  height: 100%;
+  background: black;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+  z-index: 999;
+}
+
+#overlay h1 {
+  color: red;
+  font-size: 32px;
+}
+
+#overlay button {
+  padding: 12px 25px;
+  background: red;
+  border: none;
+  color: white;
+  font-size: 16px;
+  cursor: pointer;
+  border-radius: 5px;
+}
+
+/* Main UI */
+.container {
   text-align: center;
+  padding: 20px;
 }
 
 h1 {
-  margin-top: 20px;
+  font-size: 32px;
+  background: linear-gradient(90deg, #22c55e, #06b6d4);
+  -webkit-background-clip: text;
+  color: transparent;
 }
 
 #chat {
   width: 90%;
-  max-width: 500px;
-  height: 350px;
+  max-width: 600px;
+  height: 400px;
   margin: 20px auto;
-  background: #1e293b;
+  background: rgba(30,41,59,0.7);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 15px;
   overflow-y: auto;
-  padding: 10px;
-  border-radius: 10px;
-  text-align: left;
+  box-shadow: 0 0 20px rgba(34,197,94,0.2);
 }
 
+/* Messages */
 .msg {
-  margin: 8px 0;
+  margin: 10px 0;
+  padding: 10px;
+  border-radius: 10px;
+  max-width: 70%;
+}
+
+.you {
+  background: #22c55e;
+  color: black;
+  margin-left: auto;
+}
+
+.bot {
+  background: #334155;
+}
+
+/* Input */
+.input-area {
+  margin-top: 10px;
 }
 
 input {
-  width: 65%;
-  padding: 10px;
+  width: 60%;
+  padding: 12px;
+  border-radius: 8px;
   border: none;
-  border-radius: 5px;
 }
 
 button {
-  padding: 10px 15px;
-  margin: 5px;
+  padding: 12px 15px;
   border: none;
-  border-radius: 5px;
-  cursor: pointer;
+  border-radius: 8px;
   background: #22c55e;
   color: black;
   font-weight: bold;
+  cursor: pointer;
 }
 
 #status {
-  margin-top: 10px;
-  font-size: 14px;
   color: #94a3b8;
 }
 </style>
@@ -62,37 +116,52 @@ button {
 
 <body>
 
-<h1>👤 OmleTV</h1>
+<!-- 18+ Warning -->
+<div id="overlay">
+  <h1>⚠️ 18+ Only</h1>
+  <p>This site may contain adult conversations</p>
+  <button onclick="enterSite()">Enter</button>
+</div>
 
-<div id="status">Click "Find Stranger" to start</div>
+<div class="container">
+  <h1>👤 OmleTV</h1>
+  <p id="status">Click below to start chatting</p>
 
-<button onclick="findStranger()">Find Stranger</button>
+  <button onclick="findStranger()">Find Stranger</button>
 
-<div id="chat"></div>
+  <div id="chat"></div>
 
-<div>
-  <input id="msgInput" placeholder="Type your message..." />
-  <button onclick="sendMsg()">Send</button>
+  <div class="input-area">
+    <input id="msgInput" placeholder="Type your message..." />
+    <button onclick="sendMsg()">Send</button>
+  </div>
 </div>
 
 <script>
 let connected = false;
 
+// Enter site
+function enterSite() {
+  document.getElementById("overlay").style.display = "none";
+}
+
+// Connect
 function findStranger() {
   connected = true;
 
   document.getElementById("chat").innerHTML =
-    "<div class='msg'>🤖 Connected to Stranger</div>";
+    "<div class='msg bot'>🤖 Connected to Stranger</div>";
 
   document.getElementById("status").innerText = "Connected";
 }
 
+// Send message
 async function sendMsg() {
   let input = document.getElementById("msgInput");
   let msg = input.value;
 
   if (!connected) {
-    alert("Find a stranger first!");
+    alert("Click Find Stranger first!");
     return;
   }
 
@@ -100,18 +169,17 @@ async function sendMsg() {
 
   let chat = document.getElementById("chat");
 
-  // Show user message
-  chat.innerHTML += "<div class='msg'><b>You:</b> " + msg + "</div>";
+  // User message
+  chat.innerHTML += "<div class='msg you'>"+ msg +"</div>";
   chat.scrollTop = chat.scrollHeight;
-
   input.value = "";
 
-  // Typing indicator
+  // Typing
   let typing = document.createElement("div");
-  typing.innerHTML = "<b>Stranger:</b> typing...";
+  typing.className = "msg bot";
   typing.id = "typing";
+  typing.innerText = "Typing...";
   chat.appendChild(typing);
-  chat.scrollTop = chat.scrollHeight;
 
   try {
     let res = await fetch("/api/chat", {
@@ -126,13 +194,12 @@ async function sendMsg() {
 
     document.getElementById("typing").remove();
 
-    chat.innerHTML += "<div class='msg'><b>Stranger:</b> " + data.reply + "</div>";
+    chat.innerHTML += "<div class='msg bot'>" + data.reply + "</div>";
     chat.scrollTop = chat.scrollHeight;
 
   } catch (err) {
     document.getElementById("typing").remove();
-
-    chat.innerHTML += "<div class='msg'><b>Stranger:</b> ⚠️ AI not responding</div>";
+    chat.innerHTML += "<div class='msg bot'>⚠️ AI error</div>";
   }
 }
 </script>
