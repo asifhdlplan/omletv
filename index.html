@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Stranger Chat 😶</title>
+<title>OmleTV - Anonymous Chat</title>
 
 <style>
 body {
@@ -21,7 +21,7 @@ h1 {
 #chat {
   width: 90%;
   max-width: 500px;
-  height: 300px;
+  height: 350px;
   margin: 20px auto;
   background: #1e293b;
   overflow-y: auto;
@@ -30,50 +30,64 @@ h1 {
   text-align: left;
 }
 
+.msg {
+  margin: 8px 0;
+}
+
 input {
-  width: 70%;
+  width: 65%;
   padding: 10px;
+  border: none;
+  border-radius: 5px;
 }
 
 button {
-  padding: 10px;
+  padding: 10px 15px;
   margin: 5px;
+  border: none;
+  border-radius: 5px;
   cursor: pointer;
+  background: #22c55e;
+  color: black;
+  font-weight: bold;
 }
 
-.msg {
-  margin: 5px 0;
+#status {
+  margin-top: 10px;
+  font-size: 14px;
+  color: #94a3b8;
 }
 </style>
 </head>
 
 <body>
 
-<h1>👤 Anonymous Chat</h1>
+<h1>👤 OmleTV</h1>
+
+<div id="status">Click "Find Stranger" to start</div>
 
 <button onclick="findStranger()">Find Stranger</button>
 
 <div id="chat"></div>
 
-<input id="msgInput" placeholder="Type message..." />
-<button onclick="sendMsg()">Send</button>
+<div>
+  <input id="msgInput" placeholder="Type your message..." />
+  <button onclick="sendMsg()">Send</button>
+</div>
 
 <script>
-let strangerName = "";
 let connected = false;
 
-function randomName() {
-  return "Stranger#" + Math.floor(Math.random() * 10000);
-}
-
 function findStranger() {
-  strangerName = randomName();
   connected = true;
-  document.getElementById("chat").innerHTML = 
-    "<div class='msg'>✅ Connected with " + strangerName + "</div>";
+
+  document.getElementById("chat").innerHTML =
+    "<div class='msg'>🤖 Connected to Stranger</div>";
+
+  document.getElementById("status").innerText = "Connected";
 }
 
-function sendMsg() {
+async function sendMsg() {
   let input = document.getElementById("msgInput");
   let msg = input.value;
 
@@ -86,28 +100,40 @@ function sendMsg() {
 
   let chat = document.getElementById("chat");
 
+  // Show user message
   chat.innerHTML += "<div class='msg'><b>You:</b> " + msg + "</div>";
-
-  // Fake reply
-  setTimeout(() => {
-    chat.innerHTML += "<div class='msg'><b>" + strangerName + ":</b> " + fakeReply() + "</div>";
-    chat.scrollTop = chat.scrollHeight;
-  }, 1000);
+  chat.scrollTop = chat.scrollHeight;
 
   input.value = "";
-}
 
-function fakeReply() {
-  const replies = [
-    "Hi 😄",
-    "Where are you from?",
-    "Lol 😂",
-    "That's interesting...",
-    "Tell me more 👀",
-    "I agree!",
-    "Haha nice one"
-  ];
-  return replies[Math.floor(Math.random() * replies.length)];
+  // Typing indicator
+  let typing = document.createElement("div");
+  typing.innerHTML = "<b>Stranger:</b> typing...";
+  typing.id = "typing";
+  chat.appendChild(typing);
+  chat.scrollTop = chat.scrollHeight;
+
+  try {
+    let res = await fetch("/api/chat", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({ message: msg })
+    });
+
+    let data = await res.json();
+
+    document.getElementById("typing").remove();
+
+    chat.innerHTML += "<div class='msg'><b>Stranger:</b> " + data.reply + "</div>";
+    chat.scrollTop = chat.scrollHeight;
+
+  } catch (err) {
+    document.getElementById("typing").remove();
+
+    chat.innerHTML += "<div class='msg'><b>Stranger:</b> ⚠️ AI not responding</div>";
+  }
 }
 </script>
 
