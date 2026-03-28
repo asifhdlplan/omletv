@@ -1,7 +1,6 @@
 export default async function handler(req, res) {
-  // Only allow POST request
   if (req.method !== "POST") {
-    return res.status(405).json({ error: "Method not allowed" });
+    return res.status(405).json({ error: "Only POST allowed" });
   }
 
   try {
@@ -16,25 +15,31 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: "gpt-5-mini",
         messages: [
-          {
-            role: "system",
-            content: "You are a friendly anonymous stranger. Talk casually, short replies, like real chat."
-          },
-          {
-            role: "user",
-            content: message
-          }
+          { role: "system", content: "Reply like a real anonymous stranger. Short and natural." },
+          { role: "user", content: message }
         ]
       })
     });
 
     const data = await response.json();
 
-    res.status(200).json({
-      reply: data.choices[0].message.content
-    });
+    // 🔍 Debug log (important)
+    console.log("API RESPONSE:", data);
+
+    // ✅ Safe return
+    if (data.choices && data.choices.length > 0) {
+      return res.status(200).json({
+        reply: data.choices[0].message.content
+      });
+    } else {
+      return res.status(200).json({
+        reply: "⚠️ AI not responding properly"
+      });
+    }
 
   } catch (error) {
-    res.status(500).json({ error: "Something went wrong" });
+    return res.status(500).json({
+      reply: "⚠️ Server error"
+    });
   }
 }
